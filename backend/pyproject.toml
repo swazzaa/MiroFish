@@ -23,6 +23,8 @@ dependencies = [
     # OASIS 社交媒体模拟
     "camel-oasis==0.2.5",
     "camel-ai==0.2.78",
+    # CAMEL 0.2.78 imports FastMCP from the MCP 1.x API.
+    "mcp>=1.3,<2",
     
     # 文件处理
     "PyMuPDF>=1.24.0",

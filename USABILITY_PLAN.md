@@ -74,14 +74,21 @@ cannot guarantee payment blocking. Start controlled fixtures first.
 
 ## Validation so far
 
-The foundation is in `backend/usability/`. It imports without Flask startup or
-cloud dependencies. Eleven tests pass: six domain tests and five real Chromium
-integration tests. They cover profile mapping, session isolation, evaluator
+The foundation is in `backend/usability/`. Its domain and browser modules import
+without Flask startup or cloud dependencies. Twenty-one tests pass, including
+real Chromium and real CAMEL ChatAgent integration with an offline stub model.
+They cover profile mapping, session isolation, evaluator
 context separation, bounded evidence, citation ownership, working and broken
 flows, final-action completion, invalid targets, and policy timeout.
 
-Browser tests use a scripted policy. The adapter is not yet connected to the
-MiroFish simulation manager, CAMEL agent, Zep memory, or Vue UI. Passing tests
+Browser baseline tests use a scripted policy. The CAMEL bridge uses MiroFish's
+pinned camel-ai 0.2.78 ChatAgent, vision messages, private chat memory, and strict
+action parsing. It reads MiroFish's existing JSON profile export without
+recreating personas. A real ChatAgent drives Chromium in an integration test
+using an offline StubModel; this makes no paid provider calls.
+
+The adapter is not yet connected to the MiroFish simulation manager, Zep memory,
+or Vue UI. No real provider run has been performed. Passing tests
 does not establish semantic citation support, human realism, autonomous
 learning, or production security. External URLs are deliberately unsupported.
 
@@ -100,8 +107,39 @@ uv pip install --python .venv/bin/python 'playwright>=1.50,<2'
 .venv/bin/python -m unittest discover -s tests -p 'test_usability*.py' -v
 .venv/bin/python backend/scripts/run_usability_fixture.py
 .venv/bin/python backend/scripts/run_usability_fixture.py --broken
+.venv/bin/python backend/scripts/run_usability_benchmark.py --repeats 3
 ```
 
 Outputs go to ignored `backend/uploads/usability/` directories: screenshots,
 `trace.zip`, and a structured `result.json`. The browser runner refuses an
 existing output directory. No model keys or paid API calls are needed.
+
+The benchmark repeats working and broken cases with fresh sessions and policies.
+Its six-run scripted baseline had no failed runs, unexpected completions, or
+missed completions. Its outcome agreement rate was 1.0. This is a fixture engine
+check, not a usability score or evidence of learning. Case definition hashes
+identify changes to fixtures, tasks, or evaluator criteria between versions.
+Infrastructure failures remain in the agreement denominator.
+
+### Run a model-driven fixture
+
+Install the existing backend dependencies plus the browser extra. Configure
+`LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL_NAME` in the process environment;
+do not commit credentials or paste them into chat. The new command intentionally
+does not read arbitrary dotenv files. Use the existing `reddit_profiles.json`
+export from a prepared MiroFish simulation:
+
+```sh
+.venv/bin/python backend/scripts/run_usability_agent.py --profiles /path/to/reddit_profiles.json --agent-id 1
+```
+
+This command makes real provider calls and may incur charges. It still uses
+only the controlled offline fixture. The provider must support image input.
+The current run has a three-step action budget and a 30-second task timeout;
+provider usage is not yet a monetary cost cap.
+
+### Compatibility finding
+
+An unconstrained installation of CAMEL 0.2.78 resolved MCP 2.x and failed at
+`from mcp.server import FastMCP`. Constrain `mcp>=1.3,<2` in both backend
+dependency entry points. CAMEL integration tests passed with MCP 1.30.0.
