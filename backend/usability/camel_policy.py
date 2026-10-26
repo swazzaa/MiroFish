@@ -44,7 +44,7 @@ def parse_action(content: str) -> BrowserAction:
 
 
 class CamelBrowserPolicy:
-    def __init__(self, participant: Participant, model):
+    def __init__(self, participant: Participant, model, step_timeout: float = 20):
         from camel.agents import ChatAgent
 
         self.participant = participant
@@ -54,7 +54,7 @@ class CamelBrowserPolicy:
             agent_id=f"usability-{participant.agent_id}",
             max_iteration=1,
             retry_attempts=1,
-            step_timeout=20,
+            step_timeout=step_timeout,
         )
 
     async def choose(self, context: dict, screenshot: bytes) -> BrowserAction:

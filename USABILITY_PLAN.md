@@ -75,7 +75,7 @@ cannot guarantee payment blocking. Start controlled fixtures first.
 ## Validation so far
 
 The foundation is in `backend/usability/`. Its domain and browser modules import
-without Flask startup or cloud dependencies. Thirty tests pass, including
+without Flask startup or cloud dependencies. Thirty-six tests pass, including
 real Chromium and real CAMEL ChatAgent integration with an offline stub model.
 They cover profile mapping, session isolation, evaluator
 context separation, bounded evidence, citation ownership, working and broken
@@ -96,7 +96,8 @@ recorded after the final action even when its action budget is exhausted.
 Real browser-to-archive-to-CAMEL interview tests use an offline model stub.
 
 The adapter is not yet connected to the MiroFish simulation manager, Zep memory,
-or Vue UI. No real provider run has been performed. Passing tests
+or Vue UI. Real local Qwen inference has now run through the browser and
+interview path without an API key or paid model service. Passing tests
 does not establish semantic citation support, human realism, autonomous
 learning, or production security. External URLs are deliberately unsupported.
 
@@ -167,8 +168,37 @@ quotes are checked against captured text, not screenshot pixels. Inference
 support and human psychology are not validated by these checks. Old runs made
 before session archives were added need to be rerun.
 
-No model credentials or project `.env` file were available during implementation.
-Live provider execution remains unverified; offline tests make no provider calls.
+No cloud model credentials or project `.env` file were available during implementation.
+Cloud-provider execution remains unverified. Local Qwen vision inference is
+implemented; see `LOCAL_MODEL.md` for setup, hardware limits, and validation.
+
+### Local inference milestone
+
+Use `LLM_PROVIDER=local` to select the Qwen3-VL-2B-Instruct GGUF model. Local
+mode needs no API key and rejects remote model URLs. A pinned revision and
+SHA-256 file checks protect the downloaded weights. A direct CAMEL backend
+keeps requests on loopback, ignores proxy variables, and sends no authorization
+header. It uses llama.cpp's tokenizer rather than downloading an OpenAI one.
+
+The complete local demo starts and stops its own llama.cpp child process. It
+reuses the browser runner, session archive, and evidence-checking interviewer.
+The first successful full-context run clicked the booking button once, reached
+the real confirmation state, and returned an exact cited quote, "Booking
+confirmed", on the first interview attempt. This used actual model weights,
+not a StubModel. Earlier local interview attempts were rejected by the quote
+validator; no rejected answer was accepted as an observation.
+
+The actual local model also attempted the broken fixture. It stopped at the
+step limit without a false completion, but its interview was rejected after
+two attempts because it failed evidence requirements. Keep this model as a
+local baseline; do not claim reliable general usability interviews yet.
+Results and failures are recorded in
+`backend/usability/validation/local-qwen-smoke.json`.
+
+An integration issue was found and fixed: CAMEL treated a 512-token output cap
+as the whole context budget, truncating screenshots and session records. The
+local backend now exposes a separate 7680-token input budget within the server's
+8192-token context, reserving 512 output tokens. A regression test covers it.
 
 ### Compatibility finding
 

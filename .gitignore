@@ -58,3 +58,7 @@ backend/uploads/
 
 # Docker 数据
 data/
+
+# Local open-weight models and runtime caches
+.models/
+.local-runtime/

@@ -78,7 +78,7 @@ class InterviewIntegrationTests(unittest.IsolatedAsyncioTestCase):
             async def _arun(self, messages, response_format=None, tools=None):
                 self.seen.append(str(messages))
                 response = await super()._arun(messages, response_format, tools)
-                response.choices[0].message.content = content
+                response.choices[0].message.content = content if isinstance(content, str) else content[min(len(self.seen) - 1, len(content) - 1)]
                 return response
         return InterviewStub()
 
@@ -107,6 +107,15 @@ class InterviewIntegrationTests(unittest.IsolatedAsyncioTestCase):
             result = await SessionInterviewer(self.model(content)).ask(archive, "What happened?")
         self.assertEqual(result["session_id"], session.session_id)
         self.assertEqual(archive["actions"][0]["status"], "executed")
+
+    async def test_bounded_retry_keeps_rejected_prose_out_of_fresh_context(self):
+        invalid = json.dumps({"statements": [{"kind": "observation", "text": "I felt frustrated", "evidence_ids": ["screen-final"]}]})
+        valid = json.dumps({"statements": [{"kind": "observation", "text": "Booking confirmed", "evidence_ids": ["screen-final"]}]})
+        model = self.model([invalid, valid])
+        result = await SessionInterviewer(model, max_attempts=2).ask(make_session().archive([]), "What was visible?")
+        self.assertEqual(result["validation_attempts"], 2)
+        self.assertEqual(len(result["rejected_attempt_reasons"]), 1)
+        self.assertNotIn("I felt frustrated", model.seen[1])
 
 
 if __name__ == "__main__":

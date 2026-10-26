@@ -15,7 +15,7 @@ from usability.browser import run_fixture
 from usability.camel_policy import CamelBrowserPolicy
 from usability.contracts import IndependentSession
 from usability.profiles import load_participants
-from usability.model import model_from_environment
+from usability.model import model_from_environment, resolve_model_settings
 from run_usability_fixture import HTML
 
 
@@ -34,11 +34,13 @@ async def main():
         model = model_from_environment()
     except ValueError as exc:
         parser.error(str(exc))
-    policy = CamelBrowserPolicy(participant, model)
+    settings = resolve_model_settings()
+    policy = CamelBrowserPolicy(participant, model, step_timeout=settings.timeout)
     session = IndependentSession(participant, "Book a service", "#confirmation", max_steps=3)
     output = args.output or Path(__file__).resolve().parents[1] / "uploads/usability" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     html = HTML.replace("document.getElementById('confirmation').hidden=false", "void(0)") if args.broken else HTML
-    result = await run_fixture(session, html, policy, "#confirmation", output)
+    result = await run_fixture(session, html, policy, "#confirmation", output,
+                               timeout_seconds=settings.timeout * session.max_steps + 10)
     print(json.dumps({"status": result["status"], "reason": result["reason"], "output": str(output)}, indent=2))
     if result["status"] == "failed":
         raise SystemExit(1)
