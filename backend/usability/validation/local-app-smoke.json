@@ -1,0 +1,51 @@
+{
+  "model_stub": false,
+  "paid_api": false,
+  "browser_status": "completed",
+  "reason": "success_text_observed",
+  "interview": {
+    "agent_id": 1,
+    "inferences_verified": false,
+    "output_constraints": "session_schema",
+    "question": "What did the final screen show?",
+    "rejected_attempt_reasons": [],
+    "schema_version": 1,
+    "session_id": "d23633a7e4cf4c128d51e8d98c11835f",
+    "statements": [
+      {
+        "evidence_ids": [
+          "d23633a7e4cf4c128d51e8d98c11835f-terminal"
+        ],
+        "kind": "observation",
+        "text": "Booking confirmed"
+      }
+    ],
+    "synthetic": true,
+    "validation_attempts": 1
+  },
+  "page_errors": [],
+  "mobile_overflow": false,
+  "saved_history_reopened": true,
+  "date": "2026-10-26",
+  "scope": "Local Usability Lab UI using actual Qwen inference and a curated HTTP booking demo",
+  "model": "Qwen/Qwen3-VL-2B-Instruct",
+  "revision": "8dcb98e52a1d1d02dce9249e5ab15bae8121c666",
+  "automated_tests": 56,
+  "frontend_build": "passed",
+  "desktop_viewport": [
+    1440,
+    1100
+  ],
+  "mobile_viewport": [
+    390,
+    844
+  ],
+  "public_url_verification": "not run: direct public DNS resolution is unavailable in the hosted test environment",
+  "known_limits": [
+    "One synthetic first-time visitor; at most six actions",
+    "No human behaviour validation or automatic learning",
+    "Figma, authentication, and third-party exports not implemented",
+    "Network and control restrictions do not guarantee against every website side effect"
+  ],
+  "development_failure": "An initial action was rejected because click included a non-empty value. Generation now constrains click/fill/stop separately; the independent parser remains strict."
+}

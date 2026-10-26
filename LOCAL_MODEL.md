@@ -1,5 +1,49 @@
 # Local Qwen vision model
 
+## Start the local app
+
+After installing the backend, Chromium, llama.cpp, and the model files, run
+this from `MiroFish/backend` in Windows PowerShell:
+
+```powershell
+git pull
+$env:UV_PROJECT_ENVIRONMENT = "$env:LOCALAPPDATA\MiroFish\venv"
+uv run --extra browser python run_usability.py
+```
+
+Open http://127.0.0.1:5001. Click **Working demo** first, then **Broken demo**.
+The app builds its Vue interface on first start. This requires Node.js 20.19,
+22.12, or a later supported major version. It reuses verified model files in
+`%LOCALAPPDATA%\MiroFish\models` and keeps runs in
+`%LOCALAPPDATA%\MiroFish\lab`. No model download is repeated.
+
+For another model location, pass `--models PATH`. For a llama.cpp binary that
+is not on PATH, pass `--server PATH`. Linux defaults to the repository model
+directory and `~/.local/share/MiroFish/lab` for run data.
+
+The app accepts a public URL, a task, and an optional exact visible success
+signal. One synthetic first-time visitor runs up to six actions. Screenshots,
+actions, a browser trace, and evidence-based follow-up answers remain available
+in run history. A success signal confirms that text appeared; it does not
+confirm a business transaction or prove human usability.
+
+This first version uses a fresh unauthenticated browser, same-origin navigation,
+and standard public HTTP/HTTPS ports. It blocks non-GET/HEAD requests, sockets,
+private network addresses, and recognised high-impact controls. Some websites
+change state through GET requests or custom controls, so these restrictions
+are not a guarantee against every side effect. Use a test website first.
+DNS is checked again and the proxy connects to a checked literal public IP.
+Internal sites, localhost targets, login workflows, Figma files, and third-party
+exports are not supported yet. The two built-in demos are fixed local exceptions.
+
+Repeated clicks without text or URL changes are labelled potential issues.
+Model and browser failures are labelled test limitations. Interview citations
+must quote the recorded text exactly; interpretations remain unverified.
+There is no automatic learning or claim of human-equivalent behaviour.
+
+The app binds to loopback and checks request origins and mutation tokens.
+It is a local single-user application, not a public hosted service.
+
 The usability extension can run **Qwen3-VL-2B-Instruct** locally. It needs no
 OpenAI account, provider API key, or paid inference service. It still needs
 hardware to run; this does not make hosted production compute free.

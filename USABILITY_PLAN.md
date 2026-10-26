@@ -34,7 +34,10 @@ OASIS/CAMEL extension APIs before selecting its precise agent integration.
 Separate independent task attempts, deliberate stress tests, and post-run agent
 discussion. Discussion proposes findings; it does not validate them. The first
 adapter preserves MiroFish profile identity while keeping success criteria out
-of participant context. It is not yet wired into the application.
+of participant context. The local Usability Lab now connects the Vue interface
+to a separate Flask entry point, browser jobs, persistent reports, screenshots,
+and follow-up interviews. Start it with `backend/run_usability.py`; see
+`LOCAL_MODEL.md`. The original MiroFish routes remain under `/mirofish`.
 
 ## Milestones and acceptance gates
 

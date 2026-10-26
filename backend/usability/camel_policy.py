@@ -5,9 +5,37 @@ chat memory. Nothing writes to the shared Zep graph during an independent run.
 """
 import base64
 import json
+from contextlib import nullcontext
+from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from .browser import BrowserAction
 from .contracts import Participant
+
+
+class ClickOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["click"]
+    target: int = Field(ge=0)
+    value: Literal[""]
+
+
+class FillOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["fill"]
+    target: int = Field(ge=0)
+    value: str = Field(max_length=4096)
+
+
+class StopOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["stop"]
+    target: Literal[-1]
+    value: Literal[""]
+
+
+class ActionOutput(RootModel[ClickOutput | FillOutput | StopOutput]):
+    pass
 
 
 SYSTEM_MESSAGE = """You are a synthetic participant attempting an interface task.
@@ -44,12 +72,20 @@ def parse_action(content: str) -> BrowserAction:
 
 
 class CamelBrowserPolicy:
-    def __init__(self, participant: Participant, model, step_timeout: float = 20):
+    def __init__(self, participant: Participant, model, step_timeout: float = 20, environment: str = "fixture"):
         from camel.agents import ChatAgent
 
         self.participant = participant
+        self.model = model
+        message = SYSTEM_MESSAGE
+        if environment == "website":
+            message = message.replace(
+                "Click only observed buttons with explicit type button. Fill only observed\neditable fields.",
+                "Click observed links or buttons to navigate. Fill only text fields.\nNever submit forms, pay, buy, delete, send, or publish.")
+        elif environment != "fixture":
+            raise ValueError("Unsupported browser environment")
         self.agent = ChatAgent(
-            system_message=SYSTEM_MESSAGE,
+            system_message=message,
             model=model,
             agent_id=f"usability-{participant.agent_id}",
             max_iteration=1,
@@ -75,7 +111,9 @@ class CamelBrowserPolicy:
             content=json.dumps(payload, ensure_ascii=False),
             image_list=["data:image/png;base64," + base64.b64encode(screenshot).decode("ascii")],
         )
-        response = await self.agent.astep(message)
+        constrain = getattr(self.model, "structured_output", None)
+        with constrain(ActionOutput) if callable(constrain) else nullcontext():
+            response = await self.agent.astep(message)
         if response.terminated or len(response.msgs) != 1:
             raise ValueError("Agent did not return one usable action")
         return parse_action(response.msgs[0].content)

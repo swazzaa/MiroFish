@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "backend"))
 from usability.browser import run_fixture
@@ -83,6 +84,27 @@ class CamelIntegrationTests(unittest.IsolatedAsyncioTestCase):
         first = CamelBrowserPolicy(self.participant(), self.model())
         second = CamelBrowserPolicy(self.participant(10), self.model())
         self.assertIsNot(first.agent.memory, second.agent.memory)
+
+    async def test_action_schema_is_request_local_and_validator_still_rejects(self):
+        model = self.model('{"kind":"click","target":0,"value":"unexpected"}')
+        active = []
+        @contextmanager
+        def structured_output(schema):
+            active.append(schema.model_json_schema())
+            try:
+                yield
+            finally:
+                active.append("released")
+        model.structured_output = structured_output
+        participant = self.participant()
+        policy = CamelBrowserPolicy(participant, model)
+        session = IndependentSession(participant, "Book", "done")
+        context = session.participant_context()
+        context["targets"] = [{"id": 0, "label": "Book"}]
+        with self.assertRaises(ValueError):
+            await policy.choose(context, b"\x89PNG\r\n\x1a\n")
+        self.assertEqual(active[0]["$defs"]["ClickOutput"]["properties"]["value"]["const"], "")
+        self.assertEqual(active[-1], "released")
 
     async def test_wrong_participant_rejected_before_model_call(self):
         model = self.model()
