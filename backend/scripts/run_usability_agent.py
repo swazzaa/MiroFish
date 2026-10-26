@@ -7,7 +7,6 @@ import argparse
 import asyncio
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
 import sys
 
@@ -16,6 +15,7 @@ from usability.browser import run_fixture
 from usability.camel_policy import CamelBrowserPolicy
 from usability.contracts import IndependentSession
 from usability.profiles import load_participants
+from usability.model import model_from_environment
 from run_usability_fixture import HTML
 
 
@@ -30,23 +30,10 @@ async def main():
     participant = next((item for item in participants if item.agent_id == args.agent_id), None)
     if participant is None:
         parser.error("Agent ID is not present in the supplied profiles")
-    required = ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL_NAME")
-    if any(not os.environ.get(key) for key in required):
-        parser.error("Set LLM_API_KEY, LLM_BASE_URL, and LLM_MODEL_NAME securely in the environment")
-    from camel.models import ModelFactory
-    from camel.types import ModelPlatformType
-
-    # Same CAMEL model platform and environment names as MiroFish's runner.
-    # Explicit arguments avoid mutating process-global provider configuration.
-    model = ModelFactory.create(
-        model_platform=ModelPlatformType.OPENAI,
-        model_type=os.environ["LLM_MODEL_NAME"],
-        api_key=os.environ["LLM_API_KEY"],
-        url=os.environ["LLM_BASE_URL"],
-        model_config_dict={"stream": False},
-        timeout=20,
-        max_retries=0,
-    )
+    try:
+        model = model_from_environment()
+    except ValueError as exc:
+        parser.error(str(exc))
     policy = CamelBrowserPolicy(participant, model)
     session = IndependentSession(participant, "Book a service", "#confirmation", max_steps=3)
     output = args.output or Path(__file__).resolve().parents[1] / "uploads/usability" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")

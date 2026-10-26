@@ -75,7 +75,7 @@ cannot guarantee payment blocking. Start controlled fixtures first.
 ## Validation so far
 
 The foundation is in `backend/usability/`. Its domain and browser modules import
-without Flask startup or cloud dependencies. Twenty-one tests pass, including
+without Flask startup or cloud dependencies. Thirty tests pass, including
 real Chromium and real CAMEL ChatAgent integration with an offline stub model.
 They cover profile mapping, session isolation, evaluator
 context separation, bounded evidence, citation ownership, working and broken
@@ -86,6 +86,14 @@ pinned camel-ai 0.2.78 ChatAgent, vision messages, private chat memory, and stri
 action parsing. It reads MiroFish's existing JSON profile export without
 recreating personas. A real ChatAgent drives Chromium in an integration test
 using an offline StubModel; this makes no paid provider calls.
+
+Session archives now support a separate CAMEL interview agent. Observation
+answers must quote recorded screen text exactly and cite local evidence.
+Interpretations are labelled as unverified inferences. Unknown answers must
+have no citations. Closed session records exclude evaluator criteria and
+cannot accept more evidence through the session API. Terminal screens are
+recorded after the final action even when its action budget is exhausted.
+Real browser-to-archive-to-CAMEL interview tests use an offline model stub.
 
 The adapter is not yet connected to the MiroFish simulation manager, Zep memory,
 or Vue UI. No real provider run has been performed. Passing tests
@@ -114,6 +122,11 @@ Outputs go to ignored `backend/uploads/usability/` directories: screenshots,
 `trace.zip`, and a structured `result.json`. The browser runner refuses an
 existing output directory. No model keys or paid API calls are needed.
 
+New runs also write `session.json` for later interviews. They use unique
+session identifiers in generated evidence IDs. Action transcripts distinguish
+executed actions from actions whose execution was not confirmed. Filled values
+are omitted from action logs; screenshots can still contain visible values.
+
 The benchmark repeats working and broken cases with fresh sessions and policies.
 Its six-run scripted baseline had no failed runs, unexpected completions, or
 missed completions. Its outcome agreement rate was 1.0. This is a fixture engine
@@ -137,6 +150,25 @@ This command makes real provider calls and may incur charges. It still uses
 only the controlled offline fixture. The provider must support image input.
 The current run has a three-step action budget and a 30-second task timeout;
 provider usage is not yet a monetary cost cap.
+
+### Interview a recorded session
+
+With the same model environment configured:
+
+```sh
+.venv/bin/python backend/scripts/interview_usability_session.py --session /path/to/run/session.json --question "What did the last screen show?"
+```
+
+The command writes a new `interview-<id>.json` beside the session record and
+refuses to overwrite an existing output file. It makes real provider calls.
+Each question starts a new interview context built from the original archive,
+so earlier interpretations do not silently become session facts. Observation
+quotes are checked against captured text, not screenshot pixels. Inference
+support and human psychology are not validated by these checks. Old runs made
+before session archives were added need to be rerun.
+
+No model credentials or project `.env` file were available during implementation.
+Live provider execution remains unverified; offline tests make no provider calls.
 
 ### Compatibility finding
 
