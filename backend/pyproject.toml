@@ -36,6 +36,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+browser = [
+    "playwright>=1.50,<2",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
@@ -53,4 +56,4 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = ["app", "usability"]
