@@ -1,0 +1,115 @@
+{
+  "scope": "Repeated real Qwen interviews of saved fixture sessions; no new browser runs",
+  "results": [
+    {
+      "case": "working",
+      "repeat": 1,
+      "exit_code": 0,
+      "interview_status": "validated",
+      "attempts": 1,
+      "browser_status_from_archive": "completed",
+      "statements": [
+        {
+          "kind": "observation",
+          "text": "Booking confirmed",
+          "evidence_ids": [
+            "623d06b18d23479b88100d97247a4708-terminal"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "working",
+      "repeat": 2,
+      "exit_code": 0,
+      "interview_status": "validated",
+      "attempts": 1,
+      "browser_status_from_archive": "completed",
+      "statements": [
+        {
+          "kind": "observation",
+          "text": "Booking confirmed",
+          "evidence_ids": [
+            "623d06b18d23479b88100d97247a4708-terminal"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "working",
+      "repeat": 3,
+      "exit_code": 0,
+      "interview_status": "validated",
+      "attempts": 1,
+      "browser_status_from_archive": "completed",
+      "statements": [
+        {
+          "kind": "observation",
+          "text": "Booking confirmed",
+          "evidence_ids": [
+            "623d06b18d23479b88100d97247a4708-terminal"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "broken",
+      "repeat": 1,
+      "exit_code": 0,
+      "interview_status": "validated",
+      "attempts": 1,
+      "browser_status_from_archive": "stopped",
+      "statements": [
+        {
+          "kind": "observation",
+          "text": "Book a service",
+          "evidence_ids": [
+            "c635eef24b00417e8cd20fe6ebf09bfe-terminal"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "broken",
+      "repeat": 2,
+      "exit_code": 0,
+      "interview_status": "validated",
+      "attempts": 1,
+      "browser_status_from_archive": "stopped",
+      "statements": [
+        {
+          "kind": "observation",
+          "text": "Book a service",
+          "evidence_ids": [
+            "c635eef24b00417e8cd20fe6ebf09bfe-terminal"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "broken",
+      "repeat": 3,
+      "exit_code": 0,
+      "interview_status": "validated",
+      "attempts": 1,
+      "browser_status_from_archive": "stopped",
+      "statements": [
+        {
+          "kind": "observation",
+          "text": "Book a service",
+          "evidence_ids": [
+            "c635eef24b00417e8cd20fe6ebf09bfe-terminal"
+          ]
+        }
+      ]
+    }
+  ],
+  "validated": 6,
+  "total": 6,
+  "model": "Qwen/Qwen3-VL-2B-Instruct",
+  "runtime": "llama.cpp b11910, Linux CPU",
+  "automated_tests_passed": 42,
+  "generation_constraints": "Per-session quote and citation JSON schema",
+  "independent_evidence_validator_changed": false,
+  "limitation": "Only two saved fixture sessions and one question; not human realism or general interview accuracy."
+}

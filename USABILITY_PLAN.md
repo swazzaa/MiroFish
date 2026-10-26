@@ -75,7 +75,7 @@ cannot guarantee payment blocking. Start controlled fixtures first.
 ## Validation so far
 
 The foundation is in `backend/usability/`. Its domain and browser modules import
-without Flask startup or cloud dependencies. Thirty-six tests pass, including
+without Flask startup or cloud dependencies. Forty-two tests pass, including
 real Chromium and real CAMEL ChatAgent integration with an offline stub model.
 They cover profile mapping, session isolation, evaluator
 context separation, bounded evidence, citation ownership, working and broken
@@ -199,6 +199,29 @@ An integration issue was found and fixed: CAMEL treated a 512-token output cap
 as the whole context budget, truncating screenshots and session records. The
 local backend now exposes a separate 7680-token input budget within the server's
 8192-token context, reserving 512 output tokens. A regression test covers it.
+
+### Interview reliability improvement
+
+The broken-session interview previously failed citation requirements. Local
+generation now uses a per-session JSON schema that pairs exact recorded quotes
+with valid evidence identifiers and distinguishes cited inferences from
+uncited unknown answers. `parse_interview` remains unchanged and independently
+checks every output. Claims about inferred psychology remain unverified.
+
+The local backend uses async-context-local constraints, not mutable shared
+configuration. Avoid passing response_format through ChatAgent: its formatting
+step can perform extra repairs outside our retry count. Apply the schema at the
+transport so every explicit retry stays observable and bounded.
+
+The local demo supports `--session` and `--question` for replay interviews. A
+saved browser outcome is labelled as saved rather than reported as a new run.
+Additional tests cover invalid unknown citations, fabricated quotes, wrong
+screen citations, cross-session schema isolation, and concurrent request reset.
+
+Six real Qwen replay interviews passed on the first attempt after this change,
+three per saved fixture session. These are targeted interview-format checks,
+not new browser runs or a measure of human-like behaviour. See
+`backend/usability/validation/local-qwen-interview-replays.json`.
 
 ### Compatibility finding
 

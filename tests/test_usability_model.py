@@ -35,6 +35,26 @@ class LocalModelSettingsTests(unittest.TestCase):
 
 @unittest.skipUnless(importlib.util.find_spec("camel"), "Requires camel-ai")
 class LocalTransportTests(unittest.IsolatedAsyncioTestCase):
+    async def test_parallel_schemas_are_request_local_and_reset(self):
+        import asyncio
+        from pydantic import create_model
+        from usability.local_backend import LocalLlamaModel
+        model = LocalLlamaModel(resolve_model_settings({"LLM_PROVIDER": "local"}))
+        first = create_model("FirstSession", first_only=(str, ...))
+        second = create_model("SecondSession", second_only=(str, ...))
+        async def payload(schema):
+            with model.structured_output(schema):
+                await asyncio.sleep(0)
+                return model._payload([])["response_format"]["json_schema"]["schema"]
+        try:
+            left, right = await asyncio.gather(payload(first), payload(second))
+            self.assertIn("first_only", left["properties"])
+            self.assertNotIn("second_only", left["properties"])
+            self.assertIn("second_only", right["properties"])
+            self.assertEqual(model._payload([])["response_format"], {"type": "json_object"})
+        finally:
+            await model.aclose()
+
     async def test_local_requests_have_no_authorization_and_context_exceeds_output_cap(self):
         import httpx
         from usability.local_backend import LocalLlamaModel

@@ -33,7 +33,12 @@ async def main():
     parser.add_argument("--models", type=Path, default=REPOSITORY / ".models/qwen3-vl-2b")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--broken", action="store_true")
+    parser.add_argument("--session", type=Path, help="Interview an existing session.json without rerunning the browser")
+    parser.add_argument("--question", default="What did the final screen show?")
     args = parser.parse_args()
+    if args.session and args.broken:
+        parser.error("Use either --session for replay or --broken for a new browser run")
+    replay = load_archive(args.session) if args.session else None
     if not args.server or not Path(args.server).is_file():
         parser.error("Install llama.cpp and pass --server /path/to/llama-server")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -69,28 +74,34 @@ async def main():
                 if time.monotonic() > deadline:
                     raise TimeoutError("Local model server did not become ready")
                 await asyncio.sleep(0.25)
-            print("Local Qwen model ready; running browser task", flush=True)
+            print("Local Qwen model ready; " + ("replaying recorded session" if replay else "running browser task"), flush=True)
             os.environ.update({"LLM_PROVIDER": "local", "LLM_BASE_URL": url,
                                "LLM_MODEL_NAME": manifest["alias"], "LLM_TIMEOUT_SECONDS": "120"})
             # Authored demo data in the same format as MiroFish's exports.
             participant = participants_from_profiles([{"user_id": 1, "name": "Demo customer",
                                                        "persona": "A new customer trying to book a service."}])[0]
             model = model_from_environment()
-            session = IndependentSession(participant, "Book a service", "#confirmation", max_steps=3)
-            html = HTML.replace("document.getElementById('confirmation').hidden=false", "void(0)") if args.broken else HTML
-            result = await run_fixture(session, html, CamelBrowserPolicy(participant, model, step_timeout=120),
-                                       "#confirmation", output / "session", timeout_seconds=370)
+            if replay:
+                archive = replay
+                result = dict(replay["outcome"])
+            else:
+                session = IndependentSession(participant, "Book a service", "#confirmation", max_steps=3)
+                html = HTML.replace("document.getElementById('confirmation').hidden=false", "void(0)") if args.broken else HTML
+                result = await run_fixture(session, html, CamelBrowserPolicy(participant, model, step_timeout=120),
+                                           "#confirmation", output / "session", timeout_seconds=370)
+                archive = load_archive(output / "session/session.json")
             print(json.dumps({"browser_status": result["status"], "reason": result["reason"]}), flush=True)
             if result["status"] == "failed":
                 raise RuntimeError("Model-driven browser run failed; inspect the saved trace and server log")
             print("Interviewing the recorded synthetic participant", flush=True)
             try:
                 answer = await SessionInterviewer(model, step_timeout=120, max_attempts=2).ask(
-                    load_archive(output / "session/session.json"), "What did the final screen show?")
+                    archive, args.question)
             except ValueError as error:
                 rejected = {"model": manifest["model"], "revision": manifest["revision"],
                             "model_stub": False, "paid_api": False, "browser_status": result["status"],
                             "reason": result["reason"], "interview_status": "rejected",
+                            "session_source": "saved" if replay else "new",
                             "interview_rejection_reason": str(error)}
                 (output / "summary.json").write_text(json.dumps(rejected, indent=2), encoding="utf-8")
                 print(json.dumps({**rejected, "output": str(output)}, indent=2), flush=True)
@@ -99,6 +110,9 @@ async def main():
             summary = {"model": manifest["model"], "revision": manifest["revision"],
                        "model_stub": False, "paid_api": False, "browser_status": result["status"],
                        "reason": result["reason"], "interview_status": "validated",
+                       "session_source": "saved" if replay else "new",
+                       "session_id": archive["session"]["session_id"],
+                       "output_constraints": answer["output_constraints"],
                        "interview_statements": answer["statements"],
                        "interview_validation_attempts": answer["validation_attempts"],
                        "rejected_attempt_reasons": answer["rejected_attempt_reasons"]}

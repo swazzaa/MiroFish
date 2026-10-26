@@ -102,3 +102,36 @@ interviews also failed before prompt/context fixes. These are development
 checks, not an unbiased estimate of reliability. The current model is a local
 baseline, not a validated replacement for human participants. Machine-readable
 results are in `backend/usability/validation/local-qwen-smoke.json`.
+
+## Interview format improvement
+
+Local interview requests now use a session-specific JSON schema in llama.cpp.
+Observation text comes from exact recorded lines or a complete recorded text
+block. Each quote is paired with evidence identifiers that contain it.
+Inferences require local citations; unknown answers require an empty citation
+list. The independent validator still rejects unsupported quotes and invalid
+citations. Structural validity does not verify an inference's meaning.
+
+The schema is isolated per async request. It does not change the shared model
+configuration. Constraints are applied at the transport so CAMEL cannot
+silently rewrite a rejected answer outside the explicit retry counter. Other
+model backends keep prompt-and-validator mode unless they expose the structured
+output capability; each answer reports which mode was used.
+
+To retest a saved session on Windows, from `MiroFish\backend` in PowerShell:
+
+```powershell
+$env:UV_PROJECT_ENVIRONMENT = "$env:LOCALAPPDATA\MiroFish\venv"
+uv run python scripts/run_local_usability_demo.py --models "$env:LOCALAPPDATA\MiroFish\models" --session "$env:LOCALAPPDATA\MiroFish\runs\test-02\session\session.json" --output "$env:LOCALAPPDATA\MiroFish\runs\test-03"
+```
+
+Use a new output directory for each run. Replay mode interviews the original
+archive without changing it or rerunning the browser. Its `browser_status` is
+the saved outcome, and `session_source` is `saved`. Use `--question "..."` to
+ask a different question. Do not combine `--session` with `--broken`.
+
+After this change, six real-model replay interviews passed on the first attempt:
+three from the working fixture and three from the broken fixture. These checks
+reuse saved browser records; they do not measure new browser behaviour or
+human interview accuracy. Results are in
+`backend/usability/validation/local-qwen-interview-replays.json`.

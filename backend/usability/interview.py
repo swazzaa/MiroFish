@@ -4,6 +4,7 @@ Observation text must occur in the cited screen records. Inferences remain
 explicitly unverified; citation existence does not prove their interpretation.
 """
 import asyncio
+from contextlib import nullcontext
 import json
 from pathlib import Path
 
@@ -22,6 +23,8 @@ not a fact about human thoughts or feelings. Cite at least one observation.
 kind unknown: state what cannot be determined; evidence_ids must be empty.
 Never invent measurements, feelings, actions, or evidence identifiers.
 If records do not answer the question, use unknown. Output no other keys.
+For observations, select a suitable exact recorded quote; do not paraphrase it.
+Answer the question directly. Prefer one useful statement over repetition.
 """
 
 
@@ -109,6 +112,8 @@ class SessionInterviewer:
         validate_archive(archive)
         if not isinstance(question, str) or not question.strip() or len(question) > 4000:
             raise ValueError("Interview question must be non-empty and at most 4000 characters")
+        from .interview_schema import build_interview_schema
+        response_model = build_interview_schema(archive)
         errors = []
         for attempt in range(1, self.max_attempts + 1):
             # Fresh memory on each attempt. Rejected prose cannot become facts.
@@ -118,7 +123,14 @@ class SessionInterviewer:
             if errors:
                 payload["validation_feedback"] = {"rejected_reason": errors[-1],
                     "instruction": "Correct the format or quote. Copy exact text from one cited observation. If uncertain use unknown with empty evidence_ids."}
-            response = await asyncio.wait_for(agent.astep(json.dumps(payload, ensure_ascii=False)), timeout=self.step_timeout + 5)
+            constrain = getattr(self.model, "structured_output", None)
+            # Supplying response_format to ChatAgent enables its automatic
+            # response rewriting. Apply constraints at the transport instead
+            # so only our explicit, recorded retry loop can request a repair.
+            with constrain(response_model) if callable(constrain) else nullcontext():
+                response = await asyncio.wait_for(
+                    agent.astep(json.dumps(payload, ensure_ascii=False)),
+                    timeout=self.step_timeout + 5)
             if response.terminated or len(response.msgs) != 1:
                 raise ValueError("Interview did not return one usable answer")
             try:
@@ -129,5 +141,6 @@ class SessionInterviewer:
                     raise
                 continue
             answer.update({"question": question, "validation_attempts": attempt,
-                           "rejected_attempt_reasons": errors})
+                           "rejected_attempt_reasons": errors,
+                           "output_constraints": "session_schema" if callable(constrain) else "prompt_and_validator"})
             return answer
