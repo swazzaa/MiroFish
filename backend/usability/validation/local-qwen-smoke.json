@@ -1,0 +1,36 @@
+{
+  "scope": "Development integration checks, not a representative usability benchmark",
+  "date": "2026-10-26",
+  "model": "Qwen/Qwen3-VL-2B-Instruct",
+  "weights_repository": "unsloth/Qwen3-VL-2B-Instruct-GGUF",
+  "weights_revision": "8dcb98e52a1d1d02dce9249e5ab15bae8121c666",
+  "runtime": "llama.cpp b11910, Linux x86_64 CPU, six threads",
+  "paid_model_api": false,
+  "api_key_required": false,
+  "unit_and_integration_tests_passed": 36,
+  "full_context_checks": [
+    {
+      "case": "working-booking",
+      "browser_status": "completed",
+      "completion_check": "actual fixture confirmation visible",
+      "executed_actions": 1,
+      "interview_status": "validated",
+      "interview_attempts": 1,
+      "checked_observation_quote": "Booking confirmed"
+    },
+    {
+      "case": "broken-booking",
+      "browser_status": "stopped",
+      "stop_reason": "step_limit",
+      "false_completion": false,
+      "interview_status": "rejected",
+      "interview_attempts": 2,
+      "final_rejection_reason": "Incorrect evidence requirements for statement kind"
+    }
+  ],
+  "development_failures": [
+    "An initial context-budget bug could truncate image input; fixed before the full-context checks.",
+    "An earlier full-context working-flow interview was rejected for a quote mismatch."
+  ],
+  "conclusion": "Local vision inference is connected. Broader behaviour and interview reliability remain unvalidated."
+}

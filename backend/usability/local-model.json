@@ -1,0 +1,19 @@
+{
+  "model": "Qwen/Qwen3-VL-2B-Instruct",
+  "license": "Apache-2.0",
+  "quantization_repository": "unsloth/Qwen3-VL-2B-Instruct-GGUF",
+  "revision": "8dcb98e52a1d1d02dce9249e5ab15bae8121c666",
+  "alias": "qwen3-vl-2b-local",
+  "files": [
+    {
+      "name": "Qwen3-VL-2B-Instruct-Q4_K_M.gguf",
+      "size": 1107410624,
+      "sha256": "858fcf2a39dc73b26dd86592cb0a5f949b59d1edb365d1dea98e46b02e955e56"
+    },
+    {
+      "name": "mmproj-F16.gguf",
+      "size": 819395232,
+      "sha256": "cd5a851d3928697fa1bd76d459d2cc409b6cf40c9d9682b2f5c8e7c6a9f9630f"
+    }
+  ]
+}
